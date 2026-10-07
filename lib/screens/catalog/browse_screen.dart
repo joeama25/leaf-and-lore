@@ -3,6 +3,7 @@ import '../../data/mock_data.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../widgets/book_card.dart';
+import '../../utils/app_state.dart';
 
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
@@ -17,6 +18,17 @@ class _BrowseScreenState extends State<BrowseScreen> {
   static const _genres = [
     'All', 'Fiction', 'Mindfulness', 'Nature', 'Romance', 'Mystery', 'Science'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final pending = AppState.pendingGenre.value;
+    if (pending != null) {
+      _genre = pending;
+      // Clear it so a manual tab tap doesn't re-apply the old filter
+      AppState.pendingGenre.value = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

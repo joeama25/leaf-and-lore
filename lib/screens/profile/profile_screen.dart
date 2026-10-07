@@ -5,6 +5,8 @@ import '../../services/database_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
+import 'addresses_screen.dart';
+import 'payments_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,16 +29,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _load() async {
     final id = await _auth.currentUserId();
     if (id == null) {
-      if (mounted) setState(() { _user = null; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _user = null;
+          _loading = false;
+        });
+      }
       return;
     }
-    final db = await DatabaseService.instance.database;
-    final rows = await db.query('users', where: 'id = ?', whereArgs: [id]);
-    if (mounted) {
+    try {
+      final db = await DatabaseService.instance.database;
+      final rows =
+      await db.query('users', where: 'id = ?', whereArgs: [id]);
+      if (!mounted) return;
       setState(() {
         _user = rows.isEmpty ? null : UserModel.fromMap(rows.first);
         _loading = false;
       });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
     }
   }
 
@@ -78,14 +90,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 12),
 
             _menuTile(Icons.person_outline, 'Edit profile', _guardOrSkip),
-            _menuTile(Icons.location_on_outlined, 'My addresses', _guardOrSkip),
-            _menuTile(Icons.credit_card_outlined, 'Payment methods', _guardOrSkip),
+            _menuTile(
+              Icons.location_on_outlined,
+              'My addresses',
+              _openAddresses,
+            ),
+            _menuTile(
+              Icons.credit_card_outlined,
+              'Payment methods',
+              _openPayments,
+            ),
             _menuTile(Icons.receipt_long_outlined, 'My orders', _guardOrSkip),
             _menuTile(Icons.favorite_border, 'Wishlist', _guardOrSkip),
 
             const SizedBox(height: 24),
 
-            const Text('MORE FROM LEAF & LORE', style: AppTextStyles.eyebrow),
+            const Text('MORE FROM LEAF & LORE',
+                style: AppTextStyles.eyebrow),
             const SizedBox(height: 12),
             _menuTile(Icons.help_outline, 'Help & FAQ', () {}),
             _menuTile(Icons.menu_book_outlined, 'User guide', () {}),
@@ -111,6 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -136,6 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       'READER ACCOUNT',
@@ -148,6 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.white,
                         fontSize: 22,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -256,5 +280,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     }
+  }
+
+  // ── Navigate helpers ─────────────────────────────────────────
+  Future<void> _openAddresses() async {
+    if (_user == null) {
+      final ok = await AuthGuard.requireLogin(context);
+      if (!ok || !mounted) return;
+      await _load();
+      return;
+    }
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddressesScreen()),
+    );
+  }
+
+  Future<void> _openPayments() async {
+    if (_user == null) {
+      final ok = await AuthGuard.requireLogin(context);
+      if (!ok || !mounted) return;
+      await _load();
+      return;
+    }
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PaymentsScreen()),
+    );
   }
 }

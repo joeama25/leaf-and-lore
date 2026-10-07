@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/app_state.dart';
 import '../../utils/app_text_styles.dart';
 import '../../widgets/book_card.dart';
 import '../../widgets/book_cover_placeholder.dart';
 import '../../widgets/section_header.dart';
-import '../../utils/app_state.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -39,11 +39,11 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        onPressed: () => AppState.selectedTab.value = 1,   // Browse
+                        onPressed: () => AppState.selectedTab.value = 1,
                         icon: const Icon(Icons.search, color: AppColors.ink),
                       ),
                       IconButton(
-                        onPressed: () => AppState.selectedTab.value = 3,   // Cart
+                        onPressed: () => AppState.selectedTab.value = 3,
                         icon: const Icon(Icons.shopping_bag_outlined,
                             color: AppColors.ink),
                       ),
@@ -156,7 +156,7 @@ class HomeScreen extends StatelessWidget {
             // ── Newsletter ──────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _newsletterCard(),
+              child: _newsletterCard(context),
             ),
           ],
         ),
@@ -211,27 +211,31 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Explore collection',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.forest,
+          GestureDetector(
+            onTap: () => AppState.selectedTab.value = 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Explore collection',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.forest,
+                    ),
                   ),
-                ),
-                SizedBox(width: 6),
-                Icon(Icons.arrow_forward, size: 14, color: AppColors.forest),
-              ],
+                  SizedBox(width: 6),
+                  Icon(Icons.arrow_forward,
+                      size: 14, color: AppColors.forest),
+                ],
+              ),
             ),
           ),
         ],
@@ -276,37 +280,43 @@ class HomeScreen extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (_, i) {
           final m = moods[i];
-          return Container(
-            width: 130,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  m['icon'] as IconData,
-                  color: AppColors.forest,
-                  size: 22,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        m['label'] as String,
-                        style: AppTextStyles.title.copyWith(fontSize: 15),
-                        overflow: TextOverflow.ellipsis,
+          return GestureDetector(
+            onTap: () {
+              AppState.pendingGenre.value = m['label'] as String;
+              AppState.selectedTab.value = 1;
+            },   // go to Browse
+            child: Container(
+              width: 130,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(
+                    m['icon'] as IconData,
+                    color: AppColors.forest,
+                    size: 22,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          m['label'] as String,
+                          style: AppTextStyles.title.copyWith(fontSize: 15),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.chevron_right,
-                        size: 16, color: AppColors.inkMuted),
-                  ],
-                ),
-              ],
+                      const Icon(Icons.chevron_right,
+                          size: 16, color: AppColors.inkMuted),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -352,21 +362,23 @@ class HomeScreen extends StatelessWidget {
                       height: 1.15,
                     ),
                   ),
-                  Row(
-                    children: const [
-                      Text(
-                        'Shop bestsellers',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.forest,
+                  GestureDetector(
+                    onTap: () => AppState.selectedTab.value = 1,   // go to Browse
+                    child: Row(
+                      children: const [
+                        Text(
+                          'Shop bestsellers',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.forest,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward,
-                          size: 14, color: AppColors.forest),
-                    ],
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward, size: 14, color: AppColors.forest),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -381,8 +393,6 @@ class HomeScreen extends StatelessWidget {
                 child: BookCoverPlaceholder(
                   title: 'The Art of Stillness',
                   author: 'Elena Marlowe',
-                  width: 120,
-                  height: 170,
                 ),
               ),
             ),
@@ -393,54 +403,131 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── Newsletter card ────────────────────────────────────
-  Widget _newsletterCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.forest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Icon(Icons.mail_outline, color: AppColors.gold, size: 24),
-          SizedBox(height: 12),
-          Text(
-            'A little literary letter.',
-            style: TextStyle(
-              fontFamily: 'PlayfairDisplay',
-              fontSize: 22,
-              color: AppColors.white,
-              height: 1.2,
+  Widget _newsletterCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showNewsletterDialog(context),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.forest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Icon(Icons.mail_outline, color: AppColors.gold, size: 24),
+            SizedBox(height: 12),
+            Text(
+              'A little literary letter.',
+              style: TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                fontSize: 22,
+                color: AppColors.white,
+                height: 1.2,
+              ),
             ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'New reads, thoughtful notes, and bookish things.',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              color: AppColors.sage,
-              height: 1.5,
+            SizedBox(height: 8),
+            Text(
+              'New reads, thoughtful notes, and bookish things.',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.sage,
+                height: 1.5,
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Your email address',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: AppColors.sage,
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Your email address',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: AppColors.sage,
+                    ),
                   ),
                 ),
+                Icon(Icons.arrow_forward, color: AppColors.white, size: 18),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Newsletter dialog ──────────────────────────────────
+  void _showNewsletterDialog(BuildContext context) {
+    final emailCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.mail_outline,
+                color: AppColors.gold, size: 28),
+            const SizedBox(height: 16),
+            const Text(
+              'A little literary letter.',
+              style: TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                fontSize: 22,
+                color: AppColors.ink,
+                height: 1.2,
               ),
-              Icon(Icons.arrow_forward, color: AppColors.white, size: 18),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'New reads, thoughtful notes, and bookish things. '
+                  'Delivered occasionally.',
+              style: AppTextStyles.bodyMuted,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              style: AppTextStyles.body,
+              decoration: InputDecoration(
+                hintText: 'you@example.com',
+                hintStyle: AppTextStyles.bodyMuted,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final email = emailCtrl.text.trim();
+                      Navigator.pop(dialogCtx);
+                      if (email.isEmpty) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Subscribed!')),
+                      );
+                    },
+                    child: const Text('Subscribe'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
