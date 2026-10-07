@@ -5,6 +5,7 @@ import '../../widgets/custom_textfield.dart';
 import 'register_screen.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
       );
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -49,6 +50,15 @@ class _LoginScreenState extends State<LoginScreen> {
             key: _formKey,
             child: ListView(
               children: [
+                if (Navigator.canPop(context))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: AppColors.ink),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                  ),
+                const SizedBox(height: 12),
                 const SizedBox(height: 24),
 
                 // Logo mark
@@ -141,7 +151,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordScreen(),
+                        ),
+                      ),
                     child: const Text('Forgot password?'),
                   ),
                 ),

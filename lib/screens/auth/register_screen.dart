@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../utils/validators.dart';
 import '../../widgets/custom_textfield.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/app_text_styles.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -29,7 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passCtrl.text,
         phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       );
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -43,22 +45,99 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: ListView(
               children: [
+                const SizedBox(height: 12),
+
+                // Back button
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppColors.ink),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Logo mark
+                Center(
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: AppColors.forest,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.menu_book,
+                        color: AppColors.white, size: 28),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Wordmark
+                Center(
+                  child: RichText(
+                    text: TextSpan(
+                      style: AppTextStyles.heading.copyWith(fontSize: 26),
+                      children: const [
+                        TextSpan(text: 'leaf '),
+                        TextSpan(
+                          text: '&',
+                          style: TextStyle(color: AppColors.gold),
+                        ),
+                        TextSpan(text: ' lore'),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Eyebrow
+                const Text(
+                  'WELCOME TO LEAF & LORE',
+                  style: AppTextStyles.eyebrow,
+                ),
+                const SizedBox(height: 10),
+
+                // Display heading
+                RichText(
+                  text: TextSpan(
+                    style: AppTextStyles.display,
+                    children: const [
+                      TextSpan(text: 'Your next chapter\n'),
+                      TextSpan(
+                        text: 'starts here.',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.forest,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Subtitle
+                Text(
+                  'Create an account to save favorites and find your next great read.',
+                  style: AppTextStyles.bodyMuted,
+                ),
+                const SizedBox(height: 32),
+
+                // Fields
                 CustomTextField(
-                  label: 'Full Name',
+                  label: 'Full name',
                   controller: _nameCtrl,
                   icon: Icons.person,
                   validator: (v) => Validators.required(v, 'Name'),
                 ),
                 CustomTextField(
-                  label: 'Email',
+                  label: 'Email address',
                   controller: _emailCtrl,
                   icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
@@ -77,17 +156,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscure: true,
                   validator: Validators.password,
                 ),
+
                 const SizedBox(height: 20),
+
+                // Create button
                 ElevatedButton(
                   onPressed: _loading ? null : _register,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
                   child: _loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Register',
-                      style: TextStyle(fontSize: 16)),
+                      ? const SizedBox(
+                    height: 20, width: 20,
+                    child: CircularProgressIndicator(
+                      color: AppColors.white, strokeWidth: 2,
+                    ),
+                  )
+                      : const Text('Create account  →'),
                 ),
+                const SizedBox(height: 20),
+
+                // Link to Login
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: RichText(
+                      text: TextSpan(
+                        style: AppTextStyles.bodyMuted,
+                        children: const [
+                          TextSpan(text: 'Already have an account?  '),
+                          TextSpan(
+                            text: 'Sign in',
+                            style: TextStyle(
+                              color: AppColors.forest,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

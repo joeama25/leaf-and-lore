@@ -64,4 +64,10 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_sessionKey, userId);
   }
+
+  Future<bool> isLoggedIn() async {
+    final id = await currentUserId();
+    return id != null;
+  }
+  
 }
