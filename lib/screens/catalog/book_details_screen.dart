@@ -1,18 +1,87 @@
 import 'package:flutter/material.dart';
-import '../../data/mock_data.dart';
 import '../../models/book_model.dart';
+import '../../services/auth_service.dart';
+import '../../services/cart_service.dart';
+import '../../services/wishlist_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
 import '../../widgets/book_cover_placeholder.dart';
 
-class BookDetailsScreen extends StatelessWidget {
+class BookDetailsScreen extends StatefulWidget {
   final BookModel book;
 
   const BookDetailsScreen({super.key, required this.book});
 
   @override
+  State<BookDetailsScreen> createState() => _BookDetailsScreenState();
+}
+
+class _BookDetailsScreenState extends State<BookDetailsScreen> {
+  int _quantity = 1;
+  bool _wishlisted = false;
+  int? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkWishlist();
+  }
+
+  Future<void> _checkWishlist() async {
+    final id = await AuthService().currentUserId();
+    if (id == null || widget.book.id == null) return;
+    final saved =
+    await WishlistService.instance.isWishlisted(id, widget.book.id!);
+    if (!mounted) return;
+    setState(() {
+      _userId = id;
+      _wishlisted = saved;
+    });
+  }
+
+  Future<void> _toggleWishlist() async {
+    final ok = await AuthGuard.requireLogin(context);
+    if (!ok || !mounted) return;
+
+    final id = await AuthService().currentUserId();
+    if (id == null) return;
+
+    await WishlistService.instance.toggle(id, widget.book);
+    final saved =
+    await WishlistService.instance.isWishlisted(id, widget.book.id!);
+    if (!mounted) return;
+
+    setState(() {
+      _userId = id;
+      _wishlisted = saved;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_wishlisted ? 'Added to wishlist' : 'Removed from wishlist'),
+      ),
+    );
+  }
+
+  Future<void> _addToCart() async {
+    final ok = await AuthGuard.requireLogin(context);
+    if (!ok || !mounted) return;
+
+    final id = await AuthService().currentUserId();
+    if (id == null) return;
+
+    await CartService.instance
+        .addBook(id, widget.book, quantity: _quantity);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Added $_quantity to cart')),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final book = widget.book;
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: SafeArea(
@@ -29,16 +98,11 @@ class BookDetailsScreen extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.favorite_border,
-                        color: AppColors.ink),
-                    onPressed: () async {
-                      final ok = await AuthGuard.requireLogin(context);
-                      if (ok && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Added to wishlist')),
-                        );
-                      }
-                    },
+                    icon: Icon(
+                      _wishlisted ? Icons.favorite : Icons.favorite_border,
+                      color: _wishlisted ? AppColors.danger : AppColors.ink,
+                    ),
+                    onPressed: _toggleWishlist,
                   ),
                 ],
               ),
@@ -49,7 +113,6 @@ class BookDetailsScreen extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  // Big cover on cream background
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 40, vertical: 16),
@@ -66,7 +129,6 @@ class BookDetailsScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // Meta + title
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
@@ -83,7 +145,6 @@ class BookDetailsScreen extends StatelessWidget {
                             style: AppTextStyles.bodyMuted),
                         const SizedBox(height: 14),
 
-                        // Rating row
                         Row(
                           children: [
                             const Icon(Icons.star,
@@ -91,8 +152,8 @@ class BookDetailsScreen extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               book.rating.toStringAsFixed(1),
-                              style: AppTextStyles.body.copyWith(
-                                  fontWeight: FontWeight.w600),
+                              style: AppTextStyles.body
+                                  .copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 8),
                             Text('· ${book.reviewCount} reviews',
@@ -102,20 +163,17 @@ class BookDetailsScreen extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
-                        // Price + stock row
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
                               '\$${book.price.toStringAsFixed(2)}',
-                              style: AppTextStyles.display.copyWith(
-                                  fontSize: 28),
+                              style: AppTextStyles.display
+                                  .copyWith(fontSize: 28),
                             ),
                             const Spacer(),
-                            Text(
-                              'In stock · Ships in 1–2 days',
-                              style: AppTextStyles.small,
-                            ),
+                            Text('In stock · Ships in 1–2 days',
+                                style: AppTextStyles.small),
                           ],
                         ),
                         const SizedBox(height: 28),
@@ -125,13 +183,9 @@ class BookDetailsScreen extends StatelessWidget {
                         Text('About this book',
                             style: AppTextStyles.heading),
                         const SizedBox(height: 12),
-                        Text(
-                          book.description,
-                          style: AppTextStyles.body,
-                        ),
+                        Text(book.description, style: AppTextStyles.body),
                         const SizedBox(height: 24),
 
-                        // Meta table
                         _metaRow('Genre', book.genre),
                         _metaRow('Published', book.publishedDate),
                         _metaRow('Format', book.format),
@@ -165,7 +219,7 @@ class BookDetailsScreen extends StatelessWidget {
         ),
       ),
 
-      // ── Bottom bar: quantity + add to cart ──
+      // ── Bottom bar ──────────────────────────
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.cream,
@@ -177,7 +231,7 @@ class BookDetailsScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             child: Row(
               children: [
-                // Quantity stepper
+                // Quantity stepper — working
                 Container(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -188,18 +242,35 @@ class BookDetailsScreen extends StatelessWidget {
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.remove, size: 16, color: AppColors.ink),
-                      SizedBox(width: 12),
-                      Text('1',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
-                          )),
-                      SizedBox(width: 12),
-                      Icon(Icons.add, size: 16, color: AppColors.ink),
+                    children: [
+                      GestureDetector(
+                        onTap: _quantity > 1
+                            ? () => setState(() => _quantity--)
+                            : null,
+                        child: Icon(
+                          Icons.remove,
+                          size: 16,
+                          color: _quantity > 1
+                              ? AppColors.ink
+                              : AppColors.inkMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '$_quantity',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => setState(() => _quantity++),
+                        child: const Icon(Icons.add,
+                            size: 16, color: AppColors.ink),
+                      ),
                     ],
                   ),
                 ),
@@ -208,14 +279,7 @@ class BookDetailsScreen extends StatelessWidget {
                 // Add to cart
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final ok = await AuthGuard.requireLogin(context);
-                      if (ok && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Added to cart')),
-                        );
-                      }
-                    },
+                    onPressed: _addToCart,
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),
@@ -233,7 +297,6 @@ class BookDetailsScreen extends StatelessWidget {
 
                 const SizedBox(width: 12),
 
-                // Buy now (text button)
                 TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(
@@ -254,11 +317,10 @@ class BookDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          Expanded(
-            child: Text(label, style: AppTextStyles.small),
-          ),
+          Expanded(child: Text(label, style: AppTextStyles.small)),
           Text(value,
-              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w500)),
+              style:
+              AppTextStyles.body.copyWith(fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -277,7 +339,8 @@ class BookDetailsScreen extends StatelessWidget {
           Row(
             children: List.generate(
               5,
-                  (_) => const Icon(Icons.star, color: AppColors.gold, size: 14),
+                  (_) => const Icon(Icons.star,
+                  color: AppColors.gold, size: 14),
             ),
           ),
           const SizedBox(height: 12),

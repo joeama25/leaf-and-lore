@@ -5,26 +5,28 @@ class BookCoverPlaceholder extends StatelessWidget {
   final String title;
   final String author;
   final Color background;
-  final double width;
-  final double height;
+  final double? width;
+  final double? height;
 
   const BookCoverPlaceholder({
     super.key,
     required this.title,
     required this.author,
     this.background = AppColors.tan,
-    this.width = 150,
-    this.height = 220,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Auto-pick text color based on background brightness
     final isDark = background.computeLuminance() < 0.5;
     final mainText = isDark ? AppColors.white : AppColors.ink;
     final mutedText = isDark
         ? AppColors.white.withOpacity(0.7)
         : AppColors.ink.withOpacity(0.6);
+
+    // Small covers (like in cart/wishlist tiles) skip text — it won't fit
+    final compact = (width ?? double.infinity) < 100;
 
     return Container(
       width: width,
@@ -34,7 +36,9 @@ class BookCoverPlaceholder extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(14),
-      child: Column(
+      child: compact
+          ? const SizedBox.shrink()
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

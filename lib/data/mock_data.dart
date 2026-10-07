@@ -3,6 +3,7 @@ import '../models/book_model.dart';
 class MockData {
   static final List<BookModel> books = [
     BookModel(
+      id:1,
       title: 'The Art of Stillness',
       author: 'Elena Marlowe',
       genre: 'Mindfulness',
@@ -14,6 +15,7 @@ class MockData {
       badge: 'bestseller', publishedDate: 'March 2025',
     ),
     BookModel(
+      id:2,
       title: 'Between the Pines',
       author: 'Noah Reid',
       genre: 'Fiction',
@@ -23,6 +25,7 @@ class MockData {
       badge: 'editors_pick', publishedDate: 'January 2025',
     ),
     BookModel(
+      id:3,
       title: 'The Quiet Universe',
       author: 'Daniel Cho',
       genre: 'Science',
@@ -32,6 +35,7 @@ class MockData {
       publishedDate: 'January 2025',
     ),
     BookModel(
+      id:4,
       title: 'A Field Guide to Wonder',
       author: 'Mara Finch',
       genre: 'Nature',
@@ -41,6 +45,7 @@ class MockData {
       badge: 'new', publishedDate: 'March 2025',
     ),
     BookModel(
+      id:5,
       title: 'Small Rituals',
       author: 'Clara West',
       genre: 'Mindfulness',
@@ -50,6 +55,7 @@ class MockData {
       badge: 'new', publishedDate: 'April 2025',
     ),
     BookModel(
+      id:6,
       title: 'The Night Archive',
       author: 'Julian Bell',
       genre: 'Mystery',
@@ -59,6 +65,7 @@ class MockData {
       publishedDate: 'February 2025',
     ),
     BookModel(
+      id:7,
       title: 'Wildflower Season',
       author: 'Sophie Hart',
       genre: 'Romance',
@@ -68,6 +75,7 @@ class MockData {
       badge: 'bestseller', publishedDate: 'May 2025',
     ),
     BookModel(
+      id:8,
       title: 'The Shape of Tomorrow',
       author: 'Iris Bennett',
       genre: 'Fiction',

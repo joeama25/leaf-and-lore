@@ -5,6 +5,7 @@ import '../../utils/app_text_styles.dart';
 import '../../widgets/book_card.dart';
 import '../../widgets/book_cover_placeholder.dart';
 import '../../widgets/section_header.dart';
+import '../../utils/app_state.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -38,11 +39,11 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () => AppState.selectedTab.value = 1,   // Browse
                         icon: const Icon(Icons.search, color: AppColors.ink),
                       ),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () => AppState.selectedTab.value = 3,   // Cart
                         icon: const Icon(Icons.shopping_bag_outlined,
                             color: AppColors.ink),
                       ),
@@ -250,7 +251,6 @@ class HomeScreen extends StatelessWidget {
         itemBuilder: (_, i) => BookCard(
           book: books[i],
           width: 150,
-          onWishlist: () {},
         ),
       ),
     );

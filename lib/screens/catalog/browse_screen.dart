@@ -134,14 +134,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 20,
-                  childAspectRatio: 0.48,
+                  childAspectRatio: 0.46,
                 ),
                 itemCount: books.length,
                 itemBuilder: (_, i) => BookCard(
                   book: books[i],
                   width: double.infinity,
-
-                  onWishlist: () {},
                 ),
               ),
             ),
