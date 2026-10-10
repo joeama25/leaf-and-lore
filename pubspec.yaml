@@ -25,6 +25,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+
+  assets:
+    - assets/covers/
+
   fonts:
     - family: PlayfairDisplay
       fonts:
