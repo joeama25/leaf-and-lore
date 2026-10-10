@@ -9,6 +9,7 @@ import '../../services/wishlist_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
+import '../../utils/app_state.dart';
 import '../../widgets/book_cover_placeholder.dart';
 
 class BookDetailsScreen extends StatefulWidget {
@@ -118,6 +119,31 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Added $_quantity to cart')),
     );
+  }
+
+  // Checkout is owned by Developer B. Buy Now puts the selected book
+  // in the cart and takes the customer there; it does not place an order.
+  Future<void> _buyNow() async {
+    final ok = await AuthGuard.requireLogin(context);
+    if (!ok || !mounted) return;
+
+    try {
+      final userId = await AuthService().currentUserId();
+      if (!mounted || userId == null) return;
+      await CartService.instance.addBook(
+        userId,
+        widget.book,
+        quantity: _quantity,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      AppState.selectedTab.value = 3;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not add book to cart: $e')),
+      );
+    }
   }
 
   @override
@@ -339,7 +365,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                 const SizedBox(width: 12),
 
                 TextButton(
-                  onPressed: () {},
+                  onPressed: _buyNow,
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.forest,
                   ),

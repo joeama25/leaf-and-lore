@@ -88,6 +88,13 @@ class _CartScreenState extends State<CartScreen> {
   double get _shipping => _subtotal > 50 ? 0 : 5.50;
   double get _total => _subtotal + _shipping;
 
+  // Developer B owns the actual checkout flow; avoid a silent tap.
+  void _showCheckoutUnavailable() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Checkout is coming soon')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_checking) {
@@ -197,13 +204,13 @@ class _CartScreenState extends State<CartScreen> {
                   _summaryBox(),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _showCheckoutUnavailable,
                     child: const Text('Proceed to checkout  →'),
                   ),
                   const SizedBox(height: 8),
                   Center(
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () => AppState.selectedTab.value = 1,
                       child: const Text('Continue shopping'),
                     ),
                   ),
