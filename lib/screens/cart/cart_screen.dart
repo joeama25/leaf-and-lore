@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/cart_service.dart';
@@ -6,9 +7,11 @@ import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
 import '../../widgets/book_cover_placeholder.dart';
 import '../../utils/app_state.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
@@ -28,7 +31,9 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _init() async {
     final id = await AuthService().currentUserId();
     if (!mounted) return;
+
     setState(() => _userId = id);
+
     if (id != null) {
       await _load();
     } else {
@@ -41,10 +46,13 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _load() async {
     if (_userId == null) return;
+
     setState(() => _loading = true);
+
     try {
       final items = await CartService.instance.getItems(_userId!);
       if (!mounted) return;
+
       setState(() {
         _items = items;
         _loading = false;
@@ -52,11 +60,13 @@ class _CartScreenState extends State<CartScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _items = [];
         _loading = false;
         _checking = false;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Cart error: $e')),
       );
@@ -66,26 +76,54 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _signIn() async {
     final ok = await AuthGuard.requireLogin(context);
     if (!ok) return;
+
     final id = await AuthService().currentUserId();
     if (!mounted) return;
+
     setState(() => _userId = id);
     await _load();
   }
 
   Future<void> _changeQty(CartItem item, int newQty) async {
     if (newQty < 1) return;
-    await CartService.instance.updateQuantity(item.id!, newQty);
-    await _load();
+
+    try {
+      await CartService.instance.updateQuantity(item.id!, newQty);
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update quantity: $e')),
+      );
+    }
   }
 
   Future<void> _remove(CartItem item) async {
-    await CartService.instance.remove(item.id!);
-    await _load();
+    try {
+      await CartService.instance.remove(item.id!);
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not remove book: $e')),
+      );
+    }
+  }
+
+  void _openCheckout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CheckoutScreen(),
+      ),
+    ).then((_) => _load());
   }
 
   double get _subtotal =>
-      _items.fold(0.0, (sum, i) => sum + i.subtotal);
+      _items.fold(0.0, (sum, item) => sum + item.subtotal);
+
   double get _shipping => _subtotal > 50 ? 0 : 5.50;
+
   double get _total => _subtotal + _shipping;
 
   @override
@@ -95,13 +133,17 @@ class _CartScreenState extends State<CartScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
+
     if (_userId == null) return _guestView();
+
     if (_loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
+
     if (_items.isEmpty) return _emptyView();
+
     return _filledView();
   }
 
@@ -116,9 +158,11 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 _circleIcon(Icons.shopping_bag_outlined),
                 const SizedBox(height: 24),
-                const Text('Your cart is waiting',
-                    style: AppTextStyles.heading,
-                    textAlign: TextAlign.center),
+                const Text(
+                  'Your cart is waiting',
+                  style: AppTextStyles.heading,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Sign in to save books and pick up where you left off.',
@@ -156,9 +200,11 @@ class _CartScreenState extends State<CartScreen> {
                     children: [
                       _circleIcon(Icons.shopping_bag_outlined),
                       const SizedBox(height: 24),
-                      const Text('Your cart feels\na little light.',
-                          style: AppTextStyles.display,
-                          textAlign: TextAlign.center),
+                      const Text(
+                        'Your cart feels\na little light.',
+                        style: AppTextStyles.display,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Wonderful stories are just around the corner. '
@@ -168,7 +214,9 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       const SizedBox(height: 32),
                       ElevatedButton(
-                        onPressed: ()=> AppState.selectedTab.value = 1,
+                        onPressed: () {
+                          AppState.selectedTab.value = 1;
+                        },
                         child: const Text('Explore books'),
                       ),
                     ],
@@ -192,18 +240,23 @@ class _CartScreenState extends State<CartScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 children: [
-                  ..._items.map(_cartItemTile).toList(),
+                  ..._items.map(_cartItemTile),
                   const SizedBox(height: 20),
                   _summaryBox(),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {},
-                    child: const Text('Proceed to checkout  →'),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _openCheckout,
+                      child: const Text('Proceed to checkout  →'),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Center(
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        AppState.selectedTab.value = 1;
+                      },
                       child: const Text('Continue shopping'),
                     ),
                   ),
@@ -257,36 +310,56 @@ class _CartScreenState extends State<CartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.genre.toUpperCase(),
-                    style: AppTextStyles.eyebrow),
+                Text(
+                  item.genre.toUpperCase(),
+                  style: AppTextStyles.eyebrow,
+                ),
                 const SizedBox(height: 4),
-                Text(item.title,
-                    style: AppTextStyles.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  item.title,
+                  style: AppTextStyles.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 2),
-                Text('by ${item.author}', style: AppTextStyles.small),
+                Text(
+                  'by ${item.author}',
+                  style: AppTextStyles.small,
+                ),
                 const SizedBox(height: 8),
-                Text('\$${item.price.toStringAsFixed(2)}',
-                    style: AppTextStyles.body
-                        .copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  '\$${item.price.toStringAsFixed(2)}',
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _qtyButton(Icons.remove,
-                            () => _changeQty(item, item.quantity - 1)),
+                    _qtyButton(
+                      Icons.remove,
+                          () => _changeQty(item, item.quantity - 1),
+                    ),
                     const SizedBox(width: 12),
-                    Text('${item.quantity}',
-                        style: AppTextStyles.body
-                            .copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      '${item.quantity}',
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    _qtyButton(Icons.add,
-                            () => _changeQty(item, item.quantity + 1)),
+                    _qtyButton(
+                      Icons.add,
+                          () => _changeQty(item, item.quantity + 1),
+                    ),
                     const Spacer(),
                     GestureDetector(
                       onTap: () => _remove(item),
-                      child: const Icon(Icons.delete_outline,
-                          size: 18, color: AppColors.inkMuted),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: AppColors.inkMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -323,7 +396,10 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Order summary', style: AppTextStyles.heading),
+          const Text(
+            'Order summary',
+            style: AppTextStyles.heading,
+          ),
           const SizedBox(height: 16),
           _summaryRow('Subtotal', '\$${_subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
@@ -333,21 +409,25 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Total',
-                  style: TextStyle(
-                    fontFamily: 'PlayfairDisplay',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.ink,
-                  )),
+              const Text(
+                'Total',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.ink,
+                ),
+              ),
               const Spacer(),
-              Text('\$${_total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontFamily: 'PlayfairDisplay',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.forest,
-                  )),
+              Text(
+                '\$${_total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.forest,
+                ),
+              ),
             ],
           ),
         ],
@@ -373,7 +453,11 @@ class _CartScreenState extends State<CartScreen> {
         color: AppColors.sage,
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: AppColors.forest, size: 32),
+      child: Icon(
+        icon,
+        color: AppColors.forest,
+        size: 32,
+      ),
     );
   }
 

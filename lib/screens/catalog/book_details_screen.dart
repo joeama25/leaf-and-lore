@@ -20,8 +20,8 @@ class BookDetailsScreen extends StatefulWidget {
 class _BookDetailsScreenState extends State<BookDetailsScreen> {
   int _quantity = 1;
   bool _wishlisted = false;
-  int? _userId;
 
+int? _userId;
   @override
   void initState() {
     super.initState();
