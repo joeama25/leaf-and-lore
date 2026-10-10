@@ -7,6 +7,7 @@ import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
 import 'addresses_screen.dart';
 import 'payments_screen.dart';
+import 'orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -100,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Payment methods',
               _openPayments,
             ),
-            _menuTile(Icons.receipt_long_outlined, 'My orders', _guardOrSkip),
+            _menuTile(Icons.receipt_long_outlined, 'My orders', _openOrders),
             _menuTile(Icons.favorite_border, 'Wishlist', _guardOrSkip),
 
             const SizedBox(height: 24),
@@ -295,6 +296,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       MaterialPageRoute(builder: (_) => const AddressesScreen()),
     );
+  }
+
+  Future<void> _openOrders() async {
+    if (_user == null) {
+      final ok = await AuthGuard.requireLogin(context);
+      if (!ok || !mounted) return;
+      await _load();
+      if (!mounted) return;
+    }
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => const OrdersScreen()),
+    );
+    if (!mounted) return;
+    await _load();
   }
 
   Future<void> _openPayments() async {

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/book_model.dart';
+import '../../models/review_model.dart';
+import '../../services/review_service.dart';
+import 'reviews_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/cart_service.dart';
 import '../../services/wishlist_service.dart';
@@ -21,11 +24,14 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
   int _quantity = 1;
   bool _wishlisted = false;
   int? _userId;
+  bool _loadingReviews = true;
+  List<ReviewModel> _reviews = [];
 
   @override
   void initState() {
     super.initState();
     _checkWishlist();
+    _loadReviews();
   }
 
   Future<void> _checkWishlist() async {
@@ -39,6 +45,41 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
       _wishlisted = saved;
     });
   }
+
+  Future<void> _loadReviews() async {
+    final bookId = widget.book.id;
+    if (bookId == null) {
+      if (!mounted) return;
+      setState(() => _loadingReviews = false);
+      return;
+    }
+    try {
+      final reviews = await ReviewService.instance.getForBook(bookId);
+      if (!mounted) return;
+      setState(() {
+        _reviews = reviews;
+        _loadingReviews = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingReviews = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load reader reviews.')),
+      );
+    }
+  }
+
+  Future<void> _openReviews() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => ReviewsScreen(book: widget.book)),
+    );
+    if (!mounted) return;
+    await _loadReviews();
+  }
+
+  double get _averageReviewRating => _reviews.isEmpty ? 0.0
+      : _reviews.map((r) => r.rating).reduce((a, b) => a + b) / _reviews.length;
 
   Future<void> _toggleWishlist() async {
     final ok = await AuthGuard.requireLogin(context);
@@ -151,12 +192,12 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                                 color: AppColors.gold, size: 16),
                             const SizedBox(width: 4),
                             Text(
-                              book.rating.toStringAsFixed(1),
+                              _loadingReviews ? '…' : (_reviews.isEmpty ? '—' : _averageReviewRating.toStringAsFixed(1)),
                               style: AppTextStyles.body
                                   .copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 8),
-                            Text('· ${book.reviewCount} reviews',
+                            Text(_loadingReviews ? '· loading reviews' : '· ${_reviews.length} reader reviews',
                                 style: AppTextStyles.small),
                           ],
                         ),
@@ -201,7 +242,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                                   style: AppTextStyles.heading),
                             ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: _openReviews,
                               child: const Text('See all'),
                             ),
                           ],
@@ -327,6 +368,19 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
   }
 
   Widget _reviewCard() {
+    if (_loadingReviews) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_reviews.isEmpty) {
+      return Text('No reader reviews yet. Be the first to share your thoughts.',
+        style: AppTextStyles.bodyMuted);
+    }
+    final review = _reviews.first;
+    final name = (review.reviewerName?.trim().isNotEmpty ?? false)
+        ? review.reviewerName!.trim() : 'Reader';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -337,25 +391,17 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: List.generate(
-              5,
-                  (_) => const Icon(Icons.star,
-                  color: AppColors.gold, size: 14),
-            ),
+            children: List.generate(5, (index) => Icon(
+              index < review.rating ? Icons.star : Icons.star_border,
+              color: AppColors.gold, size: 14,
+            )),
           ),
+          if (review.comment?.trim().isNotEmpty ?? false) ...[
+            const SizedBox(height: 12),
+            Text(review.comment!, style: AppTextStyles.body),
+          ],
           const SizedBox(height: 12),
-          const Text(
-            '"A book I wanted to read slowly and never finish. So beautifully written."',
-            style: TextStyle(
-              fontFamily: 'PlayfairDisplay',
-              fontSize: 15,
-              fontStyle: FontStyle.italic,
-              color: AppColors.ink,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text('— Amelia R.', style: AppTextStyles.small),
+          Text('— $name', style: AppTextStyles.small),
         ],
       ),
     );
