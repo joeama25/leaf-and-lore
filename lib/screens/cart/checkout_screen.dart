@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../models/address_model.dart';
+import '../../models/order_item_model.dart';
+import '../../models/order_model.dart';
 import '../../models/payment_method_model.dart';
 import '../../services/address_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/cart_service.dart';
-import '../../services/database_service.dart';
+import '../../services/order_service.dart';
 import '../../services/payment_method_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
@@ -19,7 +21,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  int _step = 0;                        // 0 = shipping, 1 = payment, 2 = review
+  int _step = 0;
   int? _userId;
   bool _loading = true;
   bool _placing = false;
@@ -95,51 +97,70 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _placeOrder() async {
-    if (_userId == null || _selectedAddress == null || _selectedCard == null) return;
+    if (_userId == null ||
+        _selectedAddress == null ||
+        _selectedCard == null) {
+      _snack('Select an address and a payment method');
+      return;
+    }
     if (_items.isEmpty) {
       _snack('Cart is empty');
       return;
     }
     setState(() => _placing = true);
+
     try {
-      final db = await DatabaseService.instance.database;
       final orderNumber =
           'LL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
-      final orderId = await db.insert('orders', {
-        'user_id': _userId,
-        'order_number': orderNumber,
-        'status': 'Pending',
-        'subtotal': _subtotal,
-        'shipping': _shipping,
-        'total': _total,
-        'shipping_address': _selectedAddress!.oneLine,
-        'payment_method': _selectedCard!.masked,
-        'placed_at': DateTime.now().toIso8601String(),
-      });
+      final order = OrderModel(
+        userId: _userId!,
+        orderNumber: orderNumber,
+        status: 'Pending',
+        subtotal: _subtotal,
+        shipping: _shipping,
+        total: _total,
+        shippingAddress: _selectedAddress!.oneLine,
+        paymentMethod: _selectedCard!.masked,
+        placedAt: DateTime.now().toIso8601String(),
+      );
 
-      for (final item in _items) {
-        await db.insert('order_items', {
-          'order_id': orderId,
-          'book_id': item.bookId,
-          'title': item.title,
-          'author': item.author,
-          'price': item.price,
-          'quantity': item.quantity,
-          'genre': item.genre,
-        });
-      }
+      final items = _items.map((c) => OrderItemModel(
+        bookId: c.bookId,
+        title: c.title,
+        author: c.author,
+        price: c.price,
+        quantity: c.quantity,
+        genre: c.genre,
+        coverImage: c.coverImage,
+      )).toList();
 
+      // Atomic insert via service (transaction — all or nothing)
+      final orderId = await OrderService.instance.add(order, items: items);
+
+      // Clear cart AFTER successful order
       await CartService.instance.clear(_userId!);
 
       if (!mounted) return;
+
+      // Build the persisted order for the next screen
+      final placedOrder = OrderModel(
+        id: orderId,
+        userId: order.userId,
+        orderNumber: orderNumber,
+        status: order.status,
+        subtotal: order.subtotal,
+        shipping: order.shipping,
+        total: order.total,
+        shippingAddress: order.shippingAddress,
+        paymentMethod: order.paymentMethod,
+        placedAt: order.placedAt,
+      );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => OrderPlacedScreen(
-            orderNumber: orderNumber,
-            total: _total,
-          ),
+          builder: (_) => OrderPlacedScreen(order: placedOrder),
         ),
       );
     } catch (e) {
@@ -182,7 +203,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ── Progress bar ─────────────────────────────────
   Widget _progressBar() {
     const labels = ['Shipping', 'Payment', 'Review'];
     return Padding(
@@ -206,30 +226,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 width: 28, height: 28,
                 decoration: BoxDecoration(
-                  color: (done || current) ? AppColors.forest : AppColors.white,
+                  color: (done || current)
+                      ? AppColors.forest
+                      : AppColors.white,
                   border: Border.all(
-                    color: (done || current) ? AppColors.forest : AppColors.border,
+                    color: (done || current)
+                        ? AppColors.forest
+                        : AppColors.border,
                   ),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: done
-                    ? const Icon(Icons.check, size: 14, color: AppColors.white)
+                    ? const Icon(Icons.check,
+                    size: 14, color: AppColors.white)
                     : Text(
                   '${index + 1}',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: current ? AppColors.white : AppColors.inkMuted,
+                    color: current
+                        ? AppColors.white
+                        : AppColors.inkMuted,
                   ),
                 ),
               ),
               const SizedBox(height: 4),
-              Text(labels[index], style: AppTextStyles.small.copyWith(
-                color: current ? AppColors.forest : AppColors.inkMuted,
-                fontWeight: current ? FontWeight.w600 : FontWeight.w400,
-              )),
+              Text(
+                labels[index],
+                style: AppTextStyles.small.copyWith(
+                  color: current
+                      ? AppColors.forest
+                      : AppColors.inkMuted,
+                  fontWeight: current
+                      ? FontWeight.w600
+                      : FontWeight.w400,
+                ),
+              ),
             ],
           );
         }),
@@ -237,7 +271,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ── Step body ────────────────────────────────────
   Widget _stepBody() {
     switch (_step) {
       case 0: return _shippingStep();
@@ -326,7 +359,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ── Cards ────────────────────────────────────────
   Widget _addressCard(AddressModel a) {
     final selected = _selectedAddress?.id == a.id;
     return GestureDetector(
@@ -385,7 +417,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.credit_card, size: 18, color: AppColors.forest),
+            const Icon(Icons.credit_card,
+                size: 18, color: AppColors.forest),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -395,7 +428,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       style: AppTextStyles.body
                           .copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text('Expires ${c.expiry}', style: AppTextStyles.small),
+                  Text('Expires ${c.expiry}',
+                      style: AppTextStyles.small),
                 ],
               ),
             ),
@@ -424,7 +458,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           Text('\$${item.subtotal.toStringAsFixed(2)}',
-              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
+              style: AppTextStyles.body
+                  .copyWith(fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -465,12 +500,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const Divider(color: AppColors.border, height: 24),
           Row(
             children: [
-              const Text('Total', style: TextStyle(
-                fontFamily: 'PlayfairDisplay',
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                color: AppColors.ink,
-              )),
+              const Text('Total',
+                  style: TextStyle(
+                    fontFamily: 'PlayfairDisplay',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.ink,
+                  )),
               const Spacer(),
               Text('\$${_total.toStringAsFixed(2)}',
                   style: const TextStyle(
@@ -496,7 +532,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _outlinedAction(IconData icon, String label, VoidCallback onTap) {
+  Widget _outlinedAction(
+      IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -511,16 +548,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             Icon(icon, size: 16, color: AppColors.forest),
             const SizedBox(width: 8),
-            Text(label, style: AppTextStyles.button.copyWith(
-              color: AppColors.forest, fontSize: 13,
-            )),
+            Text(label,
+                style: AppTextStyles.button.copyWith(
+                  color: AppColors.forest, fontSize: 13,
+                )),
           ],
         ),
       ),
     );
   }
 
-  // ── Bottom buttons ───────────────────────────────
   Widget _bottomBar() {
     final canContinue = (_step == 0 && _selectedAddress != null) ||
         (_step == 1 && _selectedCard != null) ||
@@ -569,8 +606,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ? const SizedBox(
                     height: 20, width: 20,
                     child: CircularProgressIndicator(
-                      color: AppColors.white, strokeWidth: 2,
-                    ),
+                        color: AppColors.white, strokeWidth: 2),
                   )
                       : Text(
                     _step < 2

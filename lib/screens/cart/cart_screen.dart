@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/cart_service.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/app_state.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
 import '../../widgets/book_cover_placeholder.dart';
-import '../../utils/app_state.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -82,6 +82,11 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _remove(CartItem item) async {
     await CartService.instance.remove(item.id!);
     await _load();
+  }
+
+
+  void _goBrowse() {
+    AppState.selectedTab.value = 1;
   }
 
   double get _subtotal =>
@@ -169,7 +174,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       const SizedBox(height: 32),
                       ElevatedButton(
-                        onPressed: ()=> AppState.selectedTab.value = 1,
+                        onPressed: _goBrowse,
                         child: const Text('Explore books'),
                       ),
                     ],
@@ -200,14 +205,15 @@ class _CartScreenState extends State<CartScreen> {
                   ElevatedButton(
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const CheckoutScreen()),
                     ),
                     child: const Text('Proceed to checkout  →'),
                   ),
                   const SizedBox(height: 8),
                   Center(
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: _goBrowse,
                       child: const Text('Continue shopping'),
                     ),
                   ),
@@ -384,20 +390,13 @@ class _CartScreenState extends State<CartScreen> {
 
   Color _coverColor(String genre) {
     switch (genre) {
-      case 'Mindfulness':
-        return AppColors.tan;
-      case 'Fiction':
-        return AppColors.forest;
-      case 'Science':
-        return const Color(0xFF2A3D4F);
-      case 'Nature':
-        return const Color(0xFFE8E4D0);
-      case 'Mystery':
-        return const Color(0xFF1B2838);
-      case 'Romance':
-        return const Color(0xFFE3C7C7);
-      default:
-        return AppColors.tan;
+      case 'Mindfulness': return AppColors.tan;
+      case 'Fiction':     return AppColors.forest;
+      case 'Science':     return const Color(0xFF2A3D4F);
+      case 'Nature':      return const Color(0xFFE8E4D0);
+      case 'Mystery':     return const Color(0xFF1B2838);
+      case 'Romance':     return const Color(0xFFE3C7C7);
+      default:            return AppColors.tan;
     }
   }
 }

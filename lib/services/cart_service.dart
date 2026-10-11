@@ -130,4 +130,9 @@ class CartService {
     final items = await getItems(userId);
     return items.fold<double>(0.0, (sum, i) => sum + i.subtotal);
   }
+
+  Future<int> itemCount(int userId) async {
+    final items = await getItems(userId);
+    return items.fold<int>(0, (sum, i) => sum + i.quantity);
+  }
 }

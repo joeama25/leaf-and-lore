@@ -17,7 +17,7 @@ class DatabaseService {
     final dbPath = join(await getDatabasesPath(), 'bookstore.db');
     return await openDatabase(
       dbPath,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -158,6 +158,7 @@ class DatabaseService {
         price REAL NOT NULL,
         quantity INTEGER NOT NULL,
         genre TEXT NOT NULL,
+        cover_image TEXT,
         FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
       )
     ''');
@@ -332,6 +333,7 @@ class DatabaseService {
           price REAL NOT NULL,
           quantity INTEGER NOT NULL,
           genre TEXT NOT NULL,
+          cover_image TEXT,
           FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
         )
       ''');
@@ -339,6 +341,9 @@ class DatabaseService {
     if (oldVersion < 4) {
       await db.execute('ALTER TABLE cart_items ADD COLUMN cover_image TEXT');
       await db.execute('ALTER TABLE wishlist_items ADD COLUMN cover_image TEXT');
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE order_items ADD COLUMN cover_image TEXT');
     }
   }
 }

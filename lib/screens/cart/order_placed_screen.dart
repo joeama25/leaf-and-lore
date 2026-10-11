@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../models/order_model.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_state.dart';
 import '../../utils/app_text_styles.dart';
+import '../profile/order_details_screen.dart';
+import '../profile/track_order_screen.dart';
 
 class OrderPlacedScreen extends StatelessWidget {
-  final String orderNumber;
-  final double total;
+  final OrderModel order;
 
-  const OrderPlacedScreen({
-    super.key,
-    required this.orderNumber,
-    required this.total,
-  });
+  const OrderPlacedScreen({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +59,11 @@ class OrderPlacedScreen extends StatelessWidget {
               const SizedBox(height: 32),
               const Divider(color: AppColors.border),
               const SizedBox(height: 20),
-              _row('Order number', orderNumber),
+              _row('Order number', order.orderNumber),
               const SizedBox(height: 10),
               _row('Order date', _today()),
               const SizedBox(height: 10),
-              _row('Total paid', '\$${total.toStringAsFixed(2)}'),
+              _row('Total paid', '\$${order.total.toStringAsFixed(2)}'),
               const SizedBox(height: 10),
               _row('Estimated delivery', '5–7 business days'),
               const SizedBox(height: 20),
@@ -74,10 +72,12 @@ class OrderPlacedScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    AppState.selectedTab.value = 4; // Profile tab
-                    Navigator.popUntil(context, (r) => r.isFirst);
-                  },
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TrackOrderScreen(order: order),
+                    ),
+                  ),
                   child: const Text('Track your order  →'),
                 ),
               ),
@@ -85,10 +85,12 @@ class OrderPlacedScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () {
-                    AppState.selectedTab.value = 4;
-                    Navigator.popUntil(context, (r) => r.isFirst);
-                  },
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OrderDetailsScreen(order: order),
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     side: const BorderSide(color: AppColors.forest),
@@ -100,7 +102,7 @@ class OrderPlacedScreen extends StatelessWidget {
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
-                  AppState.selectedTab.value = 0; // Home tab
+                  AppState.selectedTab.value = 1;
                   Navigator.popUntil(context, (r) => r.isFirst);
                 },
                 child: const Text('Continue shopping'),
@@ -117,9 +119,9 @@ class OrderPlacedScreen extends StatelessWidget {
       children: [
         Text(label, style: AppTextStyles.small),
         const Spacer(),
-        Text(value, style: AppTextStyles.body.copyWith(
-          fontWeight: FontWeight.w600,
-        )),
+        Text(value,
+            style: AppTextStyles.body
+                .copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }

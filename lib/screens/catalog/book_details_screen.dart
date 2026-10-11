@@ -4,9 +4,11 @@ import '../../services/auth_service.dart';
 import '../../services/cart_service.dart';
 import '../../services/wishlist_service.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/app_state.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
 import '../../widgets/book_cover_placeholder.dart';
+import 'reviews_screen.dart';
 
 class BookDetailsScreen extends StatefulWidget {
   final BookModel book;
@@ -20,62 +22,80 @@ class BookDetailsScreen extends StatefulWidget {
 class _BookDetailsScreenState extends State<BookDetailsScreen> {
   int _quantity = 1;
   bool _wishlisted = false;
+  int _cartCount = 0;
   int? _userId;
 
   @override
   void initState() {
     super.initState();
-    _checkWishlist();
+    _refresh();
   }
 
-  Future<void> _checkWishlist() async {
+  Future<void> _refresh() async {
     final id = await AuthService().currentUserId();
-    if (id == null || widget.book.id == null) return;
-    final saved =
-    await WishlistService.instance.isWishlisted(id, widget.book.id!);
+    if (id == null) return;
+    final saved = widget.book.id != null
+        ? await WishlistService.instance
+        .isWishlisted(id, widget.book.id!)
+        : false;
+    final count = await CartService.instance.itemCount(id);
     if (!mounted) return;
     setState(() {
       _userId = id;
       _wishlisted = saved;
+      _cartCount = count;
     });
   }
 
   Future<void> _toggleWishlist() async {
     final ok = await AuthGuard.requireLogin(context);
     if (!ok || !mounted) return;
-
     final id = await AuthService().currentUserId();
     if (id == null) return;
-
     await WishlistService.instance.toggle(id, widget.book);
-    final saved =
-    await WishlistService.instance.isWishlisted(id, widget.book.id!);
-    if (!mounted) return;
-
-    setState(() {
-      _userId = id;
-      _wishlisted = saved;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_wishlisted ? 'Added to wishlist' : 'Removed from wishlist'),
-      ),
-    );
+    await _refresh();
   }
 
   Future<void> _addToCart() async {
     final ok = await AuthGuard.requireLogin(context);
     if (!ok || !mounted) return;
-
     final id = await AuthService().currentUserId();
     if (id == null) return;
+    await CartService.instance
+        .addBook(id, widget.book, quantity: _quantity);
+    await _refresh();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added $_quantity to cart'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
+  Future<void> _buyNow() async {
+    final ok = await AuthGuard.requireLogin(context);
+    if (!ok || !mounted) return;
+    final id = await AuthService().currentUserId();
+    if (id == null) return;
     await CartService.instance
         .addBook(id, widget.book, quantity: _quantity);
     if (!mounted) return;
+    AppState.selectedTab.value = 3;
+    Navigator.popUntil(context, (r) => r.isFirst);
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Added $_quantity to cart')),
+  void _goToCart() {
+    AppState.selectedTab.value = 3;
+    Navigator.popUntil(context, (r) => r.isFirst);
+  }
+
+  void _openReviews() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReviewsScreen(book: widget.book),
+      ),
     );
   }
 
@@ -87,22 +107,58 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top bar ──────────────────────────
+            // ── Top bar with heart + cart ────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: AppColors.ink),
                     onPressed: () => Navigator.pop(context),
                   ),
+                  const Spacer(),
                   IconButton(
                     icon: Icon(
                       _wishlisted ? Icons.favorite : Icons.favorite_border,
                       color: _wishlisted ? AppColors.danger : AppColors.ink,
                     ),
                     onPressed: _toggleWishlist,
+                  ),
+                  IconButton(
+                    onPressed: _goToCart,
+                    icon: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.shopping_bag_outlined,
+                            color: AppColors.ink),
+                        if (_cartCount > 0)
+                          Positioned(
+                            right: -4,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.gold,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Text(
+                                '$_cartCount',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -127,9 +183,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
@@ -145,7 +199,6 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                         Text('by ${book.author}',
                             style: AppTextStyles.bodyMuted),
                         const SizedBox(height: 14),
-
                         Row(
                           children: [
                             const Icon(Icons.star,
@@ -161,9 +214,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                                 style: AppTextStyles.small),
                           ],
                         ),
-
                         const SizedBox(height: 20),
-
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -180,21 +231,17 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                         const SizedBox(height: 28),
                         const Divider(color: AppColors.border),
                         const SizedBox(height: 20),
-
                         Text('About this book',
                             style: AppTextStyles.heading),
                         const SizedBox(height: 12),
                         Text(book.description, style: AppTextStyles.body),
                         const SizedBox(height: 24),
-
                         _metaRow('Genre', book.genre),
                         _metaRow('Published', book.publishedDate),
                         _metaRow('Format', book.format),
-
                         const SizedBox(height: 32),
                         const Divider(color: AppColors.border),
                         const SizedBox(height: 20),
-
                         Row(
                           children: [
                             Expanded(
@@ -202,7 +249,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                                   style: AppTextStyles.heading),
                             ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: _openReviews,
                               child: const Text('See all'),
                             ),
                           ],
@@ -220,7 +267,6 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
         ),
       ),
 
-      // ── Bottom bar ──────────────────────────
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.cream,
@@ -232,7 +278,6 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             child: Row(
               children: [
-                // Quantity stepper — working
                 Container(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -257,15 +302,13 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        '$_quantity',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
-                        ),
-                      ),
+                      Text('$_quantity',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          )),
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: () => setState(() => _quantity++),
@@ -276,8 +319,6 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Add to cart
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _addToCart,
@@ -295,11 +336,9 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
                 TextButton(
-                  onPressed: () {},
+                  onPressed: _buyNow,
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.forest,
                   ),
@@ -364,20 +403,13 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
 
   Color _coverColor(String genre) {
     switch (genre) {
-      case 'Mindfulness':
-        return AppColors.tan;
-      case 'Fiction':
-        return AppColors.forest;
-      case 'Science':
-        return const Color(0xFF2A3D4F);
-      case 'Nature':
-        return const Color(0xFFE8E4D0);
-      case 'Mystery':
-        return const Color(0xFF1B2838);
-      case 'Romance':
-        return const Color(0xFFE3C7C7);
-      default:
-        return AppColors.tan;
+      case 'Mindfulness': return AppColors.tan;
+      case 'Fiction':     return AppColors.forest;
+      case 'Science':     return const Color(0xFF2A3D4F);
+      case 'Nature':      return const Color(0xFFE8E4D0);
+      case 'Mystery':     return const Color(0xFF1B2838);
+      case 'Romance':     return const Color(0xFFE3C7C7);
+      default:            return AppColors.tan;
     }
   }
 }
