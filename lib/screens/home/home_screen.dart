@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../data/mock_data.dart';
+import '../../models/book_model.dart';
+import '../../services/book_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_state.dart';
 import '../../utils/app_text_styles.dart';
@@ -7,17 +8,56 @@ import '../../widgets/book_card.dart';
 import '../../widgets/book_cover_placeholder.dart';
 import '../../widgets/section_header.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<BookModel> _books = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final books = await BookService.instance.getAll();
+      if (!mounted) return;
+      setState(() {
+        _books = books;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  List<BookModel> get _editorsPicks => _books.take(5).toList();
+  List<BookModel> get _bestsellers =>
+      _books.where((b) => b.badge == 'bestseller').toList();
+  List<BookModel> get _newArrivals =>
+      _books.where((b) => b.badge == 'new').toList();
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.only(top: 16, bottom: 32),
           children: [
-            // ── Top bar ─────────────────────────────────────
+            // ── Top bar ─────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -52,10 +92,9 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // ── Greeting ────────────────────────────────────
+            // ── Greeting ────────────────────────────
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
@@ -82,18 +121,16 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
 
-            // ── Hero card ───────────────────────────────────
+            // ── Hero card ───────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _heroCard(),
             ),
-
             const SizedBox(height: 32),
 
-            // ── Editor's Picks ──────────────────────────────
+            // ── Editor's Picks ──────────────────────
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: SectionHeader(
@@ -102,11 +139,10 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _horizontalBooks(MockData.books.take(5).toList()),
-
+            _horizontalBooks(_editorsPicks),
             const SizedBox(height: 32),
 
-            // ── Browse by mood ──────────────────────────────
+            // ── Browse by mood ──────────────────────
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: SectionHeader(
@@ -116,44 +152,44 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _moodCards(),
-
             const SizedBox(height: 32),
 
-            // ── The Reading Room ────────────────────────────
+            // ── Reading Room ────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _readingRoomCard(),
             ),
-
             const SizedBox(height: 32),
 
-            // ── Bestsellers ─────────────────────────────────
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: SectionHeader(
-                eyebrow: 'READER FAVORITES',
-                title: 'Bestsellers',
+            // ── Bestsellers ─────────────────────────
+            if (_bestsellers.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: SectionHeader(
+                  eyebrow: 'READER FAVORITES',
+                  title: 'Bestsellers',
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _horizontalBooks(MockData.bestsellers()),
+              const SizedBox(height: 16),
+              _horizontalBooks(_bestsellers),
+              const SizedBox(height: 32),
+            ],
 
-            const SizedBox(height: 32),
-
-            // ── New arrivals ────────────────────────────────
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: SectionHeader(
-                eyebrow: 'FRESH OFF THE PRESS',
-                title: 'New arrivals',
+            // ── New arrivals ────────────────────────
+            if (_newArrivals.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: SectionHeader(
+                  eyebrow: 'FRESH OFF THE PRESS',
+                  title: 'New arrivals',
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _horizontalBooks(MockData.newArrivals()),
+              const SizedBox(height: 16),
+              _horizontalBooks(_newArrivals),
+              const SizedBox(height: 32),
+            ],
 
-            const SizedBox(height: 32),
-
-            // ── Newsletter ──────────────────────────────────
+            // ── Newsletter ──────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _newsletterCard(context),
@@ -164,7 +200,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Hero card ──────────────────────────────────────────
+  // ── Hero card ─────────────────────────────────
   Widget _heroCard() {
     return Container(
       height: 220,
@@ -180,35 +216,25 @@ class HomeScreen extends StatelessWidget {
           const Text(
             'THE JOY OF A GOOD BOOK',
             style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 9,
+              fontFamily: 'Inter', fontSize: 9,
               fontWeight: FontWeight.w600,
-              color: AppColors.sage,
-              letterSpacing: 1.5,
+              color: AppColors.sage, letterSpacing: 1.5,
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Text(
-                'Find a story that',
-                style: TextStyle(
-                  fontFamily: 'PlayfairDisplay',
-                  fontSize: 26,
-                  color: AppColors.white,
-                  height: 1.1,
-                ),
-              ),
-              Text(
-                'stays with you.',
-                style: TextStyle(
-                  fontFamily: 'PlayfairDisplay',
-                  fontSize: 26,
-                  color: AppColors.gold,
-                  fontStyle: FontStyle.italic,
-                  height: 1.1,
-                ),
-              ),
+              Text('Find a story that',
+                  style: TextStyle(
+                    fontFamily: 'PlayfairDisplay',
+                    fontSize: 26, color: AppColors.white, height: 1.1,
+                  )),
+              Text('stays with you.',
+                  style: TextStyle(
+                    fontFamily: 'PlayfairDisplay',
+                    fontSize: 26, color: AppColors.gold,
+                    fontStyle: FontStyle.italic, height: 1.1,
+                  )),
             ],
           ),
           GestureDetector(
@@ -222,18 +248,14 @@ class HomeScreen extends StatelessWidget {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Explore collection',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.forest,
-                    ),
-                  ),
+                  Text('Explore collection',
+                      style: TextStyle(
+                        fontFamily: 'Inter', fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.forest,
+                      )),
                   SizedBox(width: 6),
-                  Icon(Icons.arrow_forward,
-                      size: 14, color: AppColors.forest),
+                  Icon(Icons.arrow_forward, size: 14, color: AppColors.forest),
                 ],
               ),
             ),
@@ -243,8 +265,9 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Horizontal book scroll ─────────────────────────────
-  Widget _horizontalBooks(List books) {
+  // ── Horizontal book scroll ────────────────────
+  Widget _horizontalBooks(List<BookModel> books) {
+    if (books.isEmpty) return const SizedBox.shrink();
     return SizedBox(
       height: 370,
       child: ListView.separated(
@@ -252,15 +275,12 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: books.length,
         separatorBuilder: (_, __) => const SizedBox(width: 14),
-        itemBuilder: (_, i) => BookCard(
-          book: books[i],
-          width: 150,
-        ),
+        itemBuilder: (_, i) => BookCard(book: books[i], width: 150),
       ),
     );
   }
 
-  // ── Mood cards row ─────────────────────────────────────
+  // ── Mood cards ────────────────────────────────
   Widget _moodCards() {
     final moods = [
       {'label': 'Fiction', 'icon': Icons.auto_awesome},
@@ -284,7 +304,7 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               AppState.pendingGenre.value = m['label'] as String;
               AppState.selectedTab.value = 1;
-            },   // go to Browse
+            },
             child: Container(
               width: 130,
               padding: const EdgeInsets.all(14),
@@ -297,11 +317,8 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    m['icon'] as IconData,
-                    color: AppColors.forest,
-                    size: 22,
-                  ),
+                  Icon(m['icon'] as IconData,
+                      color: AppColors.forest, size: 22),
                   Row(
                     children: [
                       Expanded(
@@ -324,7 +341,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── The Reading Room card ──────────────────────────────
+  // ── Reading Room ──────────────────────────────
   Widget _readingRoomCard() {
     return Container(
       height: 190,
@@ -342,41 +359,31 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'THE READING ROOM',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.forest,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const Text(
-                    'Some stories are\nworth sharing.',
-                    style: TextStyle(
-                      fontFamily: 'PlayfairDisplay',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.ink,
-                      height: 1.15,
-                    ),
-                  ),
+                  const Text('THE READING ROOM',
+                      style: TextStyle(
+                        fontFamily: 'Inter', fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.forest, letterSpacing: 1.5,
+                      )),
+                  const Text('Some stories are\nworth sharing.',
+                      style: TextStyle(
+                        fontFamily: 'PlayfairDisplay',
+                        fontSize: 18, fontWeight: FontWeight.w500,
+                        color: AppColors.ink, height: 1.15,
+                      )),
                   GestureDetector(
-                    onTap: () => AppState.selectedTab.value = 1,   // go to Browse
+                    onTap: () => AppState.selectedTab.value = 1,
                     child: Row(
                       children: const [
-                        Text(
-                          'Shop bestsellers',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.forest,
-                          ),
-                        ),
+                        Text('Shop bestsellers',
+                            style: TextStyle(
+                              fontFamily: 'Inter', fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.forest,
+                            )),
                         SizedBox(width: 6),
-                        Icon(Icons.arrow_forward, size: 14, color: AppColors.forest),
+                        Icon(Icons.arrow_forward,
+                            size: 14, color: AppColors.forest),
                       ],
                     ),
                   ),
@@ -402,7 +409,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Newsletter card ────────────────────────────────────
+  // ── Newsletter ────────────────────────────────
   Widget _newsletterCard(BuildContext context) {
     return GestureDetector(
       onTap: () => _showNewsletterDialog(context),
@@ -417,37 +424,26 @@ class HomeScreen extends StatelessWidget {
           children: const [
             Icon(Icons.mail_outline, color: AppColors.gold, size: 24),
             SizedBox(height: 12),
-            Text(
-              'A little literary letter.',
-              style: TextStyle(
-                fontFamily: 'PlayfairDisplay',
-                fontSize: 22,
-                color: AppColors.white,
-                height: 1.2,
-              ),
-            ),
+            Text('A little literary letter.',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay', fontSize: 22,
+                  color: AppColors.white, height: 1.2,
+                )),
             SizedBox(height: 8),
-            Text(
-              'New reads, thoughtful notes, and bookish things.',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AppColors.sage,
-                height: 1.5,
-              ),
-            ),
+            Text('New reads, thoughtful notes, and bookish things.',
+                style: TextStyle(
+                  fontFamily: 'Inter', fontSize: 13,
+                  color: AppColors.sage, height: 1.5,
+                )),
             SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Your email address',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.sage,
-                    ),
-                  ),
+                  child: Text('Your email address',
+                      style: TextStyle(
+                        fontFamily: 'Inter', fontSize: 13,
+                        color: AppColors.sage,
+                      )),
                 ),
                 Icon(Icons.arrow_forward, color: AppColors.white, size: 18),
               ],
@@ -458,7 +454,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Newsletter dialog ──────────────────────────────────
   void _showNewsletterDialog(BuildContext context) {
     final emailCtrl = TextEditingController();
     showDialog(
@@ -476,15 +471,11 @@ class HomeScreen extends StatelessWidget {
             const Icon(Icons.mail_outline,
                 color: AppColors.gold, size: 28),
             const SizedBox(height: 16),
-            const Text(
-              'A little literary letter.',
-              style: TextStyle(
-                fontFamily: 'PlayfairDisplay',
-                fontSize: 22,
-                color: AppColors.ink,
-                height: 1.2,
-              ),
-            ),
+            const Text('A little literary letter.',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay', fontSize: 22,
+                  color: AppColors.ink, height: 1.2,
+                )),
             const SizedBox(height: 8),
             Text(
               'New reads, thoughtful notes, and bookish things. '

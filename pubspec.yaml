@@ -25,6 +25,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/covers/
+
   fonts:
     - family: PlayfairDisplay
       fonts:
@@ -33,7 +36,6 @@ flutter:
         - asset: assets/fonts/PlayfairDisplay-Italic.ttf
           weight: 400
           style: italic
-
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf

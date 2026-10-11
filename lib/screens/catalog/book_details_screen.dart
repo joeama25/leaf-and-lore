@@ -123,6 +123,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                         background: _coverColor(book.genre),
                         width: 220,
                         height: 320,
+                        imagePath: book.coverImage,
                       ),
                     ),
                   ),

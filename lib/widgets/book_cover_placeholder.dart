@@ -7,6 +7,7 @@ class BookCoverPlaceholder extends StatelessWidget {
   final Color background;
   final double? width;
   final double? height;
+  final String? imagePath;
 
   const BookCoverPlaceholder({
     super.key,
@@ -15,6 +16,7 @@ class BookCoverPlaceholder extends StatelessWidget {
     this.background = AppColors.tan,
     this.width,
     this.height,
+    this.imagePath,
   });
 
   @override
@@ -24,21 +26,31 @@ class BookCoverPlaceholder extends StatelessWidget {
     final mutedText = isDark
         ? AppColors.white.withOpacity(0.7)
         : AppColors.ink.withOpacity(0.6);
-
-    // Small covers (like in cart/wishlist tiles) skip text — it won't fit
     final compact = (width ?? double.infinity) < 100;
 
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: width,
+        height: height,
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        child: imagePath != null && imagePath!.isNotEmpty
+            ? Image.asset(
+          imagePath!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              _fallback(mainText, mutedText, compact),
+        )
+            : _fallback(mainText, mutedText, compact),
       ),
+    );
+  }
+
+  Widget _fallback(Color mainText, Color mutedText, bool compact) {
+    if (compact) return const SizedBox.shrink();
+    return Padding(
       padding: const EdgeInsets.all(14),
-      child: compact
-          ? const SizedBox.shrink()
-          : Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

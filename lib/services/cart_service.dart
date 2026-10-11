@@ -10,6 +10,7 @@ class CartItem {
   final double price;
   final int quantity;
   final String genre;
+  final String? coverImage;
 
   CartItem({
     this.id,
@@ -20,6 +21,7 @@ class CartItem {
     required this.price,
     this.quantity = 1,
     required this.genre,
+    this.coverImage,
   });
 
   double get subtotal => price * quantity;
@@ -33,6 +35,7 @@ class CartItem {
     'price': price,
     'quantity': quantity,
     'genre': genre,
+    'cover_image': coverImage,
   };
 
   factory CartItem.fromMap(Map<String, dynamic> map) => CartItem(
@@ -44,6 +47,7 @@ class CartItem {
     price: (map['price'] as num).toDouble(),
     quantity: map['quantity'] as int,
     genre: map['genre'] as String,
+    coverImage: map['cover_image'] as String?,
   );
 }
 
@@ -88,6 +92,7 @@ class CartService {
         'price': book.price,
         'quantity': quantity,
         'genre': book.genre,
+        'cover_image': book.coverImage,
       });
     }
   }

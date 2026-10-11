@@ -1,5 +1,4 @@
 import '../models/book_model.dart';
-
 class MockData {
   static final List<BookModel> books = [
     BookModel(
@@ -10,7 +9,7 @@ class MockData {
       description:
       'An invitation to slow down, notice the small things, and find '
           'wonder in the spaces between.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_1.png',
       price: 24.99, rating: 4.9, reviewCount: 128,
       badge: 'bestseller', publishedDate: 'March 2025',
     ),
@@ -20,7 +19,7 @@ class MockData {
       author: 'Noah Reid',
       genre: 'Fiction',
       description: 'A quiet novel about returning home.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_2.png',
       price: 18.50, rating: 4.7, reviewCount: 96,
       badge: 'editors_pick', publishedDate: 'January 2025',
     ),
@@ -30,7 +29,7 @@ class MockData {
       author: 'Daniel Cho',
       genre: 'Science',
       description: 'A luminous exploration of the cosmos.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_3.png',
       price: 25.00, rating: 4.9, reviewCount: 128,
       publishedDate: 'January 2025',
     ),
@@ -40,7 +39,7 @@ class MockData {
       author: 'Mara Finch',
       genre: 'Nature',
       description: 'A gentle companion for a more intentional life.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_4.png',
       price: 21.99, rating: 4.8, reviewCount: 82,
       badge: 'new', publishedDate: 'March 2025',
     ),
@@ -50,7 +49,7 @@ class MockData {
       author: 'Clara West',
       genre: 'Mindfulness',
       description: 'Everyday practices for a slower, kinder life.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_5.png',
       price: 16.99, rating: 4.8, reviewCount: 64,
       badge: 'new', publishedDate: 'April 2025',
     ),
@@ -60,7 +59,7 @@ class MockData {
       author: 'Julian Bell',
       genre: 'Mystery',
       description: 'A librarian discovers a hidden collection.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_6.png',
       price: 27.00, rating: 4.6, reviewCount: 110,
       publishedDate: 'February 2025',
     ),
@@ -70,7 +69,7 @@ class MockData {
       author: 'Sophie Hart',
       genre: 'Romance',
       description: 'A slow-burn love story set in a coastal town.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_7.png',
       price: 19.99, rating: 4.7, reviewCount: 91,
       badge: 'bestseller', publishedDate: 'May 2025',
     ),
@@ -80,7 +79,7 @@ class MockData {
       author: 'Iris Bennett',
       genre: 'Fiction',
       description: 'Speculative short stories about the near future.',
-      coverImage: '',
+      coverImage: 'assets/covers/book_8.png',
       price: 22.00, rating: 4.5, reviewCount: 74,
       publishedDate: 'June 2025',
     ),

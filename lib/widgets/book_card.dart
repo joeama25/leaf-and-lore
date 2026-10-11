@@ -90,6 +90,7 @@ class _BookCardState extends State<BookCard> {
                     title: book.title,
                     author: book.author,
                     background: _coverColor(book.genre),
+                    imagePath: book.coverImage,
                   ),
                 ),
                 if (book.badge.isNotEmpty)

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/payment_method_model.dart';
-import '../../services/payment_method_services.dart';
+import '../../services/payment_method_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/validators.dart';

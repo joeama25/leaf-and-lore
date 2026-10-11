@@ -10,6 +10,7 @@ class WishlistItem {
   final double price;
   final String genre;
   final String addedAt;
+  final String? coverImage;
 
   WishlistItem({
     this.id,
@@ -20,6 +21,7 @@ class WishlistItem {
     required this.price,
     required this.genre,
     required this.addedAt,
+    this.coverImage,
   });
 
   Map<String, dynamic> toMap() => {
@@ -31,6 +33,7 @@ class WishlistItem {
     'price': price,
     'genre': genre,
     'added_at': addedAt,
+    'cover_image': coverImage,
   };
 
   factory WishlistItem.fromMap(Map<String, dynamic> map) => WishlistItem(
@@ -42,6 +45,7 @@ class WishlistItem {
     price: (map['price'] as num).toDouble(),
     genre: map['genre'] as String,
     addedAt: map['added_at'] as String,
+    coverImage: map['cover_image'] as String?,
   );
 }
 
@@ -82,6 +86,7 @@ class WishlistService {
       'price': book.price,
       'genre': book.genre,
       'added_at': DateTime.now().toIso8601String(),
+      'cover_image': book.coverImage,
     });
   }
 

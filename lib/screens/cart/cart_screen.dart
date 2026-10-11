@@ -6,6 +6,7 @@ import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
 import '../../widgets/book_cover_placeholder.dart';
 import '../../utils/app_state.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -197,7 +198,10 @@ class _CartScreenState extends State<CartScreen> {
                   _summaryBox(),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                    ),
                     child: const Text('Proceed to checkout  →'),
                   ),
                   const SizedBox(height: 8),
@@ -251,6 +255,7 @@ class _CartScreenState extends State<CartScreen> {
             width: 70,
             height: 100,
             background: _coverColor(item.genre),
+            imagePath: item.coverImage,
           ),
           const SizedBox(width: 12),
           Expanded(

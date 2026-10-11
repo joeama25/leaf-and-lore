@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import 'add_address_screen.dart';
+
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
   @override
@@ -73,10 +74,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
             : ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Text(
-              'Where your books find you',
-              style: AppTextStyles.bodyMuted,
-            ),
+            Text('Where your books find you',
+                style: AppTextStyles.bodyMuted),
             const SizedBox(height: 20),
             if (_items.isEmpty) _emptyState(),
             for (final a in _items) _addressTile(a),
@@ -95,8 +94,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: 80, height: 80,
             decoration: const BoxDecoration(
               color: AppColors.sage,
               shape: BoxShape.circle,
@@ -134,15 +132,12 @@ class _AddressesScreenState extends State<AddressesScreen> {
           children: [
             Icon(Icons.add, color: AppColors.forest, size: 18),
             SizedBox(width: 8),
-            Text(
-              'Add new address',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.forest,
-              ),
-            ),
+            Text('Add new address',
+                style: TextStyle(
+                  fontFamily: 'Inter', fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.forest,
+                )),
           ],
         ),
       ),
@@ -183,15 +178,12 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     color: AppColors.sage,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'Default',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.forest,
-                    ),
-                  ),
+                  child: const Text('Default',
+                      style: TextStyle(
+                        fontFamily: 'Inter', fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.forest,
+                      )),
                 ),
             ],
           ),

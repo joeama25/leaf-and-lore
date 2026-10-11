@@ -73,7 +73,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       author: item.author,
       genre: item.genre,
       description: '',
-      coverImage: '',
+      coverImage: item.coverImage ?? '',
       price: item.price,
       publishedDate: '',
     );
@@ -209,6 +209,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   Widget _tile(WishlistItem item) {
+    // print('wishlist ITEM COVER: ${item.coverImage}');
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
@@ -226,6 +227,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
             width: 70,
             height: 100,
             background: _coverColor(item.genre),
+            imagePath: item.coverImage,
           ),
           const SizedBox(width: 12),
           Expanded(

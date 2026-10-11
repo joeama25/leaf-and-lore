@@ -5,6 +5,7 @@ import '../../services/database_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../utils/auth_guard.dart';
+import '../admin/admin_login_screen.dart';
 import 'addresses_screen.dart';
 import 'payments_screen.dart';
 
@@ -90,18 +91,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 12),
 
             _menuTile(Icons.person_outline, 'Edit profile', _guardOrSkip),
-            _menuTile(
-              Icons.location_on_outlined,
-              'My addresses',
-              _openAddresses,
-            ),
-            _menuTile(
-              Icons.credit_card_outlined,
-              'Payment methods',
-              _openPayments,
-            ),
+            _menuTile(Icons.location_on_outlined, 'My addresses',
+                _openAddresses),
+            _menuTile(Icons.credit_card_outlined, 'Payment methods',
+                _openPayments),
             _menuTile(Icons.receipt_long_outlined, 'My orders', _guardOrSkip),
-            _menuTile(Icons.favorite_border, 'Wishlist', _guardOrSkip),
+            _menuTile(Icons.favorite_border, 'Wishlist', _goToWishlist),
 
             const SizedBox(height: 24),
 
@@ -110,6 +105,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 12),
             _menuTile(Icons.help_outline, 'Help & FAQ', () {}),
             _menuTile(Icons.menu_book_outlined, 'User guide', () {}),
+
+            if (_user?.role == 'admin') ...[
+              const SizedBox(height: 24),
+              const Text('STAFF ACCESS', style: AppTextStyles.eyebrow),
+              const SizedBox(height: 12),
+              _menuTile(
+                Icons.shield_outlined,
+                'Admin portal',
+                    () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AdminLoginScreen()),
+                ),
+              ),
+            ],
 
             if (_user != null) ...[
               const SizedBox(height: 28),
@@ -121,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Account card ─────────────────────────────────────────────
+  // ── Account card ─────────────────────────────────
   Widget _accountCard() {
     final signedIn = _user != null;
     return Container(
@@ -160,10 +170,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'READER ACCOUNT',
-                      style: AppTextStyles.eyebrow,
-                    ),
+                    const Text('READER ACCOUNT',
+                        style: AppTextStyles.eyebrow),
                     const SizedBox(height: 4),
                     Text(
                       signedIn ? _user!.name : 'Guest Reader',
@@ -213,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  // ── Menu tile ────────────────────────────────────────────────
+  // ── Menu tile ────────────────────────────────────
   Widget _menuTile(IconData icon, String label, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -259,17 +267,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const Icon(Icons.logout, color: AppColors.danger, size: 20),
             const SizedBox(width: 12),
-            Text(
-              'Log out',
-              style: AppTextStyles.body.copyWith(color: AppColors.danger),
-            ),
+            Text('Log out',
+                style: AppTextStyles.body
+                    .copyWith(color: AppColors.danger)),
           ],
         ),
       ),
     );
   }
 
-  // ── Guard helper ─────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────
   Future<void> _guardOrSkip() async {
     if (_user == null) {
       await _requireLogin();
@@ -282,7 +289,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ── Navigate helpers ─────────────────────────────────────────
+  void _goToWishlist() {
+    // Jump to Wishlist tab (2)
+    Navigator.of(context).popUntil((r) => r.isFirst);
+  }
+
   Future<void> _openAddresses() async {
     if (_user == null) {
       final ok = await AuthGuard.requireLogin(context);
