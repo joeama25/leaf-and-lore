@@ -35,9 +35,9 @@ class OrderPlacedScreen extends StatelessWidget {
               const SizedBox(height: 12),
               RichText(
                 textAlign: TextAlign.center,
-                text: TextSpan(
+                text: const TextSpan(
                   style: AppTextStyles.display,
-                  children: const [
+                  children:  [
                     TextSpan(text: 'Order placed\n'),
                     TextSpan(
                       text: 'successfully.',
@@ -50,7 +50,7 @@ class OrderPlacedScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 'Thank you for shopping with us. '
                     'Your next great read is on its way.',
                 textAlign: TextAlign.center,
