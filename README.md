@@ -1,17 +1,42 @@
-# book_store_app
+# leaf & lore
 
-A new Flutter project.
+A mobile book store app — browse, wishlist, buy, and track your reading life.
 
-## Getting Started
+Built with Flutter + SQLite.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Guest browsing
+- Search, filter, sort books
+- Wishlist
+- Cart and 3-step checkout
+- Order tracking
+- Reviews and ratings
+- Profile management
+- Admin panel
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Stack
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Flutter, SQLite via sqflite, shared_preferences, provider.
+
+## Run it
+
+git clone https://github.com/joeama25/leaf-and-lore.git
+cd leaf-and-lore
+flutter pub get
+flutter run
+
+## Documentation
+
+- User Guide: docs/USER_GUIDE.md
+- Developer Guide: docs/DEVELOPER_GUIDE.md
+
+## Admin access
+
+Email: admin@leafandlore.com
+Password: admin123
+
+
+## License
+
+Educational project.
